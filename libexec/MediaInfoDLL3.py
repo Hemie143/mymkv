@@ -27,8 +27,13 @@
 import os
 import sys
 from ctypes import *
+
+
 if os.name == "nt" or os.name == "dos" or os.name == "os2" or os.name == "ce":
-    MediaInfoDLL_Handler = windll.MediaInfo
+    _file = 'MediaInfo.dll'
+    _path = os.path.join(*(os.path.split(__file__)[:-1] + (_file,)))
+    #MediaInfoDLL_Handler = windll.MediaInfo
+    MediaInfoDLL_Handler = CDLL(_path)
     MustUseAnsi = 0
 elif sys.platform == "darwin":
     MediaInfoDLL_Handler = CDLL("libmediainfo.0.dylib")

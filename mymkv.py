@@ -23,7 +23,7 @@ def main(args=None):
     if not os.path.isfile(options.filename):
         print('File does not exist')
         exit(1)
-    mkv_input = videoMKV(options.filename)
+    mkv_input = videoMKV(options.filename)      # Initialize
     print(mkv_input.info)
 
     # mediainfo test = knowit.know(options.filename, {'provider': 'mediainfo'})
