@@ -13,7 +13,8 @@ class MediaInfo:
             print(_path)
             # TODO: get _mod out of if-else
             MediaInfoDLL_Handler = CDLL(_path)
-            self._mod = cdll.LoadLibary(_path)
+            #self._mod = cdll.LoadLibary(_path)
+            self._mod = CDLL(_path)
             # MediaInfoDLL_Handler = CDLL(_path)
             MustUseAnsi = 0
         elif sys.platform == "darwin":
@@ -29,6 +30,16 @@ class MediaInfo:
             MediaInfoDLL_Handler = CDLL(_path)
             MustUseAnsi = 1
 
+    def open(self):
+        MediaInfo_Open = self._mod.MediaInfo_Open
+        MediaInfo_Open.argtypes = [c_void_p, c_wchar_p]
+        MediaInfo_Open.restype = c_size_t
+        return self.MediaInfo_Open(self.Handle, File)
+
+'''
+print("Get with Stream=General and Parameter='FileSize'")
+print(MI.Get(Stream.General, 0, "FileSize"))
+'''
 
 
 # test = MediaInfo('../FPS_test_1080.mkv')

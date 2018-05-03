@@ -26,7 +26,7 @@ if Version=="":
     print("MediaInfo.Dll: this version of the DLL is not compatible")
     exit
 
-
+'''
 #Information about MediaInfo
 print("Info_Parameters")
 MI.Option_Static("Info_Parameters")
@@ -44,10 +44,11 @@ print(MI.Option_Static("Info_Codecs"))
 print("")
 print("Open")
 MI.Open("Example.ogg")
+'''
 
 print("")
 print("Inform with Complete=false")
-MI.Option_Static("Complete")
+#MI.Option_Static("Complete")
 print(MI.Inform())
 
 print("")
