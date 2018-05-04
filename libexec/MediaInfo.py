@@ -31,10 +31,17 @@ class MediaInfo:
             MustUseAnsi = 1
 
     def open(self):
+
+        MediaInfo_New = self._mod.MediaInfo_New
+        MediaInfo_New.argtypes = []
+        MediaInfo_New.restype = c_void_p
+
+        self.Handle = MediaInfo_New
+
         MediaInfo_Open = self._mod.MediaInfo_Open
         MediaInfo_Open.argtypes = [c_void_p, c_wchar_p]
         MediaInfo_Open.restype = c_size_t
-        return self.MediaInfo_Open(self.Handle, File)
+        return self._mod.MediaInfo_Open(self.Handle, self._path)
 
 '''
 print("Get with Stream=General and Parameter='FileSize'")
