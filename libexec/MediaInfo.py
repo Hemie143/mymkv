@@ -2,6 +2,30 @@ import os
 import sys
 from ctypes import *
 
+if os.name == "nt" or os.name == "dos" or os.name == "os2" or os.name == "ce":
+    _file = 'MediaInfo.dll'
+    _path = os.path.abspath(os.path.join(os.path.dirname(__file__), _file))
+    print(_path)
+    # TODO: get _mod out of if-else
+    MediaInfoDLL_Handler = CDLL(_path)
+    # self._mod = cdll.LoadLibary(_path)
+    _mod = CDLL(_path)
+    # MediaInfoDLL_Handler = CDLL(_path)
+    MustUseAnsi = 0
+elif sys.platform == "darwin":
+    _file = 'libmediainfo.0.dylib'
+    _path = os.path.join(*(os.path.split(__file__)[:-1] + (_file,)))
+    # TODO : use _mod ?
+    MediaInfoDLL_Handler = CDLL(_path)
+    MustUseAnsi = 1
+else:
+    _file = 'libmediainfo.so.0'
+    _path = os.path.join(*(os.path.split(__file__)[:-1] + (_file,)))
+    # TODO : use _mod ?
+    MediaInfoDLL_Handler = CDLL(_path)
+    MustUseAnsi = 1
+
+
 
 class Stream:
     General, Video, Audio, Text, Other, Image, Menu, Max = list(range(8))
@@ -21,33 +45,10 @@ class FileOptions:
 
 class MediaInfo:
 
-    def __init__(self, mkvfilename):
-        self.mkvfilename = mkvfilename
+    def __init__(self, mediafilename):
+        self.mkvfilename = mediafilename
 
-        if os.name == "nt" or os.name == "dos" or os.name == "os2" or os.name == "ce":
-            _file = 'MediaInfo.dll'
-            self._path = os.path.abspath(os.path.join(os.path.dirname(__file__), _file))
-            print(self._path)
-            # TODO: get _mod out of if-else
-            MediaInfoDLL_Handler = CDLL(self._path)
-            #self._mod = cdll.LoadLibary(_path)
-            self._mod = CDLL(self._path)
-            # MediaInfoDLL_Handler = CDLL(_path)
-            MustUseAnsi = 0
-        elif sys.platform == "darwin":
-            _file = 'libmediainfo.0.dylib'
-            self._path = os.path.join(*(os.path.split(__file__)[:-1] + (_file,)))
-            # TODO : use _mod ?
-            MediaInfoDLL_Handler = CDLL(_path)
-            MustUseAnsi = 1
-        else:
-            _file = 'libmediainfo.so.0'
-            self._path = os.path.join(*(os.path.split(__file__)[:-1] + (_file,)))
-            # TODO : use _mod ?
-            MediaInfoDLL_Handler = CDLL(_path)
-            MustUseAnsi = 1
-
-        MediaInfo_New = self._mod.MediaInfo_New
+        MediaInfo_New = _mod.MediaInfo_New
         MediaInfo_New.argtypes = []
         MediaInfo_New.restype = c_void_p
 
@@ -56,11 +57,8 @@ class MediaInfo:
 
 
 
-    def Open(self, filename=None):
+    def Open(self):
         # self.Handle = MediaInfo_New
-
-        if filename:
-            print('Open has been provided a filename')
 
         MediaInfo_Open = self._mod.MediaInfo_Open
         MediaInfo_Open.argtypes = [c_void_p, c_wchar_p]
