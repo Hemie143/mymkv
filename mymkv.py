@@ -1,18 +1,70 @@
 import sys
 import os.path
+import subprocess
 # import knowit
-import libexec.MediaInfoDLL3 as mediainfo
+from libexec.MediaInfo import *
 
-class videoMKV:
+
+class VideoMKV:
 
     def __init__(self, mkvfilename):
         self.mkvfilename = mkvfilename
         self.mkvfolder = os.path.dirname(mkvfilename)
-        self.mediainfo = mediainfo.MediaInfo()
-        self.mediainfo.Open(mkvfilename)
-        self.mediainfo.Option_Static("Complete", "1")
-        self.info = self.mediainfo.Inform()
+        self.mediainfo = MediaInfo()
+        self.mediainfo.open(mkvfilename)
+        self.filesize = int(self.mediainfo.get(Stream.General, 0, 'FileSize'))
+        self.videocount = int(self.mediainfo.get(Stream.General, 0, 'VideoCount'))
+        self.audiocount = int(self.mediainfo.get(Stream.General, 0, 'AudioCount'))
+        self.duration = float(self.mediainfo.get(Stream.General, 0, 'Duration'))
 
+        self.avsfilename = '{}.avs'.format(os.path.splitext(self.mkvfilename)[0])
+        self.libexecfolder = os.path.join(os.path.dirname(__file__), 'libexec')
+        # Video
+        # self.framerate = float(self.mediainfo.get(Stream.General, 0, 'Framerate'))
+        # self.framecount = int(self.mediainfo.get(Stream.General, 0, 'FrameCount'))
+
+        # Audio
+        self.audio = {}
+        self.audio['streamcount'] = int(self.mediainfo.get(Stream.Audio, 0, 'StreamCount'))
+        self.audio['id'] = int(self.mediainfo.get(Stream.Audio, 0, 'ID'))
+        self.audio['streamorder'] = int(self.mediainfo.get(Stream.Audio, 0, 'StreamOrder'))
+
+        # self.mediainfo.Option_Static("Complete", "1")
+        # self.info = self.mediainfo.Inform()
+
+    def createAVS(self):
+        with open(self.avsfilename, 'wt') as f:
+            lsmash_dllfile = os.path.join(self.libexecfolder, 'LSMASHSource.dll')
+            f.write('LoadPlugin("{}")\n'.format(lsmash_dllfile))
+            f.write('LWLibavVideoSource("{}")\n'.format(self.mkvfilename))
+            # NO resize for now
+            # LanczosResize(1280,548)
+
+    def extractAudio(self):
+        # https://mkvtoolnix.download/doc/mkvextract.html
+        # Assumes there is one audio track only, format is DTS and language is en
+        toolfile = os.path.join(self.libexecfolder, 'mkvextract.exe')
+        audiofile = '{}.dts'.format(os.path.splitext(self.mkvfilename)[0])
+        cmd = [toolfile, self.mkvfilename, 'tracks', '{}:{}'.format(self.audio['id'] - 1, audiofile)]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+       # stdout, stderr = p.communicate()
+        while True:
+            output = process.stdout.readline()
+            output = process.stdout.read()
+            # if output == '' and process.poll() is not None:
+            if output == '':
+                    break
+            if output:
+                print
+                output.strip()
+        rc = process.poll()
+        print(rc)
+
+        '''
+        "E:\DVD\tools\megui\tools\mkvmerge\mkvextract.exe" tracks "E:\Videos\Movies\Toni.Erdmann.2016.720p.BluRay.x264-SADPANDA-Obfuscated\218554260e274868a8d1c6976ca27b0f.mkv" --ui-language en 1:"E:\Videos\Movies\Toni.Erdmann.2016.720p.BluRay.x264-SADPANDA-Obfuscated\218554260e274868a8d1c6976ca27b0f - [0] German.dts"
+        "E:\DVD\tools\megui\tools\mkvmerge\mkvextract.exe" tracks "E:\Videos\Movies\Star.Trek.I.The.Motion.Picture.1979.MULTi.1080p.BluRay.x264-UKDHD\star.trek.the.motion.picture.1979.multi.1080p.bluray.x264-ukdhd.mkv" --ui-language en 1:"E:\Videos\Movies\Star.Trek.I.The.Motion.Picture.1979.MULTi.1080p.BluRay.x264-UKDHD\star.trek.the.motion.picture.1979.multi.1080p.bluray.x264-ukdhd - [0] French.ac3" 2:"E:\Videos\Movies\Star.Trek.I.The.Motion.Picture.1979.MULTi.1080p.BluRay.x264-UKDHD\star.trek.the.motion.picture.1979.multi.1080p.bluray.x264-ukdhd - [1] English.ac3"
+        "E:\DVD\tools\megui\tools\mkvmerge\mkvextract.exe" "E:\Videos\Movies\Test\61b1800dc4794b6aa9a164a1e76cd4f4.mkv" tracks 1:"E:\Videos\Movies\Test\61b1800dc4794b6aa9a164a1e76cd4f4 - [0] English.dts" --ui-language en
+        '''
 
 def main(args=None):
     import argparse
@@ -23,14 +75,18 @@ def main(args=None):
     if not os.path.isfile(options.filename):
         print('File does not exist')
         exit(1)
-    mkv_input = videoMKV(options.filename)      # Initialize
-    print(mkv_input.info)
+    mkv_input = VideoMKV(options.filename)      # Initialize
+    print(mkv_input.audio)
 
+    # Create AviSynth file
+    mkv_input.createAVS()
+    # Extract audio if DTS
+    mkv_input.extractAudio()
+    # Create LWI LSmash Index
+
+    # Convert DTS to AC3
     # mediainfo test = knowit.know(options.filename, {'provider': 'mediainfo'})
     # print(test)
-
-
-
     # main(args.filename)
 
     '''

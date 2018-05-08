@@ -1,12 +1,13 @@
 import libexec.MediaInfo as MediaInfo
 
 
-test1 = MediaInfo.MediaInfo('FPS_test_1080.mkv')
-print(test1._mod.__dict__)
+test1 = MediaInfo.MediaInfo()
 
-print(test1.Open())
 
-print(test1.Get(0, 0, "FileSize"))
+print(test1.open('FPS_test_1080.mkv'))
+
+print(test1.get(0, 0, "UniqueID"))
+print(test1.get(0, 0, "Encoded_Date"))
 
 
 '''

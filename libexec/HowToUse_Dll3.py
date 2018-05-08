@@ -38,17 +38,17 @@ print(MI.Option_Static("Info_Capacities"))
 print("")
 print("Info_Codecs")
 print(MI.Option_Static("Info_Codecs"))
+'''
 
 
 #An example of how to use the library
 print("")
 print("Open")
 MI.Open("Example.ogg")
-'''
 
 print("")
 print("Inform with Complete=false")
-#MI.Option_Static("Complete")
+MI.Option_Static("Complete")
 print(MI.Inform())
 
 print("")
