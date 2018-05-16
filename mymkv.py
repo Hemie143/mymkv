@@ -1,9 +1,10 @@
 import sys
 import os.path
 import subprocess
-# import knowit
+import re
+import progress
 from libexec.MediaInfo import *
-
+from libexec.LSMASHSource import *
 
 class VideoMKV:
 
@@ -46,25 +47,34 @@ class VideoMKV:
         toolfile = os.path.join(self.libexecfolder, 'mkvextract.exe')
         audiofile = '{}.dts'.format(os.path.splitext(self.mkvfilename)[0])
         cmd = [toolfile, self.mkvfilename, 'tracks', '{}:{}'.format(self.audio['id'] - 1, audiofile)]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-       # stdout, stderr = p.communicate()
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+        bar = progress.ProgressBar('Extracting DTS: [{progress}] {percentage:.2f}%', width=50)
+        bar.show()
         while True:
             output = process.stdout.readline()
-            output = process.stdout.read()
-            # if output == '' and process.poll() is not None:
             if output == '':
                     break
-            if output:
-                print
-                output.strip()
-        rc = process.poll()
-        print(rc)
+            if output and output.startswith('Progress'):
+                # print(output.strip())
+                r = re.match('Progress: (\d+)%', output)
+                if r:
+                    perc = int(r.group(1))
+                    bar.reset()
+                    bar.update(perc)
+                    bar.show()
 
+
+        rc = process.poll()
+        return rc
         '''
         "E:\DVD\tools\megui\tools\mkvmerge\mkvextract.exe" tracks "E:\Videos\Movies\Toni.Erdmann.2016.720p.BluRay.x264-SADPANDA-Obfuscated\218554260e274868a8d1c6976ca27b0f.mkv" --ui-language en 1:"E:\Videos\Movies\Toni.Erdmann.2016.720p.BluRay.x264-SADPANDA-Obfuscated\218554260e274868a8d1c6976ca27b0f - [0] German.dts"
         "E:\DVD\tools\megui\tools\mkvmerge\mkvextract.exe" tracks "E:\Videos\Movies\Star.Trek.I.The.Motion.Picture.1979.MULTi.1080p.BluRay.x264-UKDHD\star.trek.the.motion.picture.1979.multi.1080p.bluray.x264-ukdhd.mkv" --ui-language en 1:"E:\Videos\Movies\Star.Trek.I.The.Motion.Picture.1979.MULTi.1080p.BluRay.x264-UKDHD\star.trek.the.motion.picture.1979.multi.1080p.bluray.x264-ukdhd - [0] French.ac3" 2:"E:\Videos\Movies\Star.Trek.I.The.Motion.Picture.1979.MULTi.1080p.BluRay.x264-UKDHD\star.trek.the.motion.picture.1979.multi.1080p.bluray.x264-ukdhd - [1] English.ac3"
         "E:\DVD\tools\megui\tools\mkvmerge\mkvextract.exe" "E:\Videos\Movies\Test\61b1800dc4794b6aa9a164a1e76cd4f4.mkv" tracks 1:"E:\Videos\Movies\Test\61b1800dc4794b6aa9a164a1e76cd4f4 - [0] English.dts" --ui-language en
         '''
+
+    def LWI_index(filename):
+        return LSMASHSource.LWLibavVideoSource(filename)
+
 
 def main(args=None):
     import argparse
@@ -83,6 +93,7 @@ def main(args=None):
     # Extract audio if DTS
     mkv_input.extractAudio()
     # Create LWI LSmash Index
+    mkv_input.LWI_index(options.filename)
 
     # Convert DTS to AC3
     # mediainfo test = knowit.know(options.filename, {'provider': 'mediainfo'})

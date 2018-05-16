@@ -66,6 +66,10 @@ class MediaInfo:
         mediainfo_option.restype = c_wchar_p                            # string
         return mediainfo_option(self._handle, Option, Value)
 
+    def close(self):
+        # TODO: MediaInfo close
+        pass
+
 
 
 '''
